@@ -1,20 +1,21 @@
 from ikomia import utils, core, dataprocess
-import RAFTOpticalFlow_process as processMod
-
-#PyQt GUI framework
+from ikomia.utils import qtconversion
+from RAFTOpticalFlow.RAFTOpticalFlow_process import RAFTOpticalFlowParam, RAFTOpticalFlowProcess
+# PyQt GUI framework
 from PyQt5.QtWidgets import *
+
 
 # --------------------
 # - Class which implements widget associated with the process
 # - Inherits PyCore.CProtocolTaskWidget from Ikomia API
 # --------------------
-class RAFTOpticalFlowWidget(core.CProtocolTaskWidget):
+class RAFTOpticalFlowWidget(core.CWorkflowTaskWidget):
 
     def __init__(self, param, parent):
-        core.CProtocolTaskWidget.__init__(self, parent)
+        core.CWorkflowTaskWidget.__init__(self, parent)
 
         if param is None:
-            self.parameters = processMod.RAFTOpticalFlowParam()
+            self.parameters = RAFTOpticalFlowParam()
         else:
             self.parameters = param
 
@@ -25,10 +26,10 @@ class RAFTOpticalFlowWidget(core.CProtocolTaskWidget):
         cuda_label = QLabel("CUDA")
         self.cuda_ckeck = QCheckBox()
 
-        if self.parameters.cuda == True:
+        if self.parameters.cuda:
             self.cuda_ckeck.setChecked(True)
 
-        if self.parameters.cuda == False:
+        if not self.parameters.cuda:
             self.cuda_ckeck.setChecked(False)
             self.cuda_ckeck.setEnabled(False)
 
@@ -44,11 +45,10 @@ class RAFTOpticalFlowWidget(core.CProtocolTaskWidget):
         self.gridLayout.addWidget(self.rbtn2, 1, 1)
 
         # PyQt -> Qt wrapping
-        layout_ptr = utils.PyQtToQt(self.gridLayout)
+        layout_ptr = qtconversion.PyQtToQt(self.gridLayout)
 
         # Set widget layout
         self.setLayout(layout_ptr)
-
 
     def onApply(self):
         # Apply button clicked slot
@@ -61,7 +61,7 @@ class RAFTOpticalFlowWidget(core.CProtocolTaskWidget):
             self.parameters.device = "cpu"
         self.parameters.small=self.rbtn1.isChecked()
 
-        self.parameters.model = processMod.RAFTOpticalFlowProcess.trained_model(self.parameters.small, self.parameters.device)
+        self.parameters.model = RAFTOpticalFlowProcess.trained_model(self.parameters.small, self.parameters.device)
         # Send signal to launch the process
         self.emitApply(self.parameters)
 

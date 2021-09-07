@@ -1,6 +1,4 @@
 from ikomia import dataprocess
-import RAFTOpticalFlow_process as processMod
-import RAFTOpticalFlow_widget as widgetMod
 
 
 # --------------------
@@ -13,9 +11,11 @@ class RAFTOpticalFlow(dataprocess.CPluginProcessInterface):
         dataprocess.CPluginProcessInterface.__init__(self)
 
     def getProcessFactory(self):
+        from RAFTOpticalFlow.RAFTOpticalFlow_process import RAFTOpticalFlowProcessFactory
         # Instantiate process object
-        return processMod.RAFTOpticalFlowProcessFactory()
+        return RAFTOpticalFlowProcessFactory()
 
     def getWidgetFactory(self):
+        from RAFTOpticalFlow.RAFTOpticalFlow_widget import RAFTOpticalFlowWidgetFactory
         # Instantiate associated widget object
-        return widgetMod.RAFTOpticalFlowWidgetFactory()
+        return RAFTOpticalFlowWidgetFactory()

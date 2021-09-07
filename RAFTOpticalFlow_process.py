@@ -1,22 +1,22 @@
 from ikomia import core, dataprocess
 import copy
-# Your imports below
 import torch
 import numpy as np
 import cv2
-from core.raft import RAFT
-from core.utils import flow_viz
+from RAFTOpticalFlow.core.raft import RAFT
+from RAFTOpticalFlow.core.utils import flow_viz
 from collections import OrderedDict
 import os
+
 
 # --------------------
 # - Class to handle the process parameters
 # - Inherits PyCore.CProtocolTaskParam from Ikomia API
 # --------------------
-class RAFTOpticalFlowParam(core.CProtocolTaskParam):
+class RAFTOpticalFlowParam(core.CWorkflowTaskParam):
 
     def __init__(self):
-        core.CProtocolTaskParam.__init__(self)
+        core.CWorkflowTaskParam.__init__(self)
         # Place default value initialization here
         # Example : self.windowSize = 25
         self.small = True
@@ -24,37 +24,37 @@ class RAFTOpticalFlowParam(core.CProtocolTaskParam):
         self.device = "cuda" if self.cuda==True else "cpu"
         self.model = None
 
-    def setParamMap(self, paramMap):
+    def setParamMap(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
-        self.small = paramMap["small"]
-        self.device = paramMap["device"]
+        self.small = param_map["small"]
+        self.device = param_map["device"]
         self.model = None
 
     def getParamMap(self):
         # Send parameters values to Ikomia application
         # Create the specific dict structure (string container)
-        paramMap = core.ParamMap()
-        paramMap["small"] = str(self.small)
-        paramMap["device"] = str(self.device)
+        param_map = core.ParamMap()
+        param_map["small"] = str(self.small)
+        param_map["device"] = str(self.device)
+        return param_map
 
-        return paramMap
 
 # --------------------
 # - Class which implements the process
 # - Inherits PyCore.CProtocolTask or derived from Ikomia API
 # --------------------
-class RAFTOpticalFlowProcess(dataprocess.CVideoProcess):
+class RAFTOpticalFlowProcess(dataprocess.CVideoTask):
 
     def __init__(self, name, param):
-        dataprocess.CVideoProcess.__init__(self,name)
+        dataprocess.CVideoTask.__init__(self, name)
         # Add input/output of the process here
         # Set this variable to True if you want to work with the raw Optical Flow (vector field)
         self.rawOutput = False
-        if self.rawOutput==True:
-            self.addOutput(dataprocess.CImageProcessIO())
+        if self.rawOutput:
+            self.addOutput(dataprocess.CImageIO())
 
-        self.frame_1=None
+        self.frame_1 = None
         # Create parameters class
         if param is None:
             self.setParam(RAFTOpticalFlowParam())
@@ -140,7 +140,7 @@ class RAFTOpticalFlowProcess(dataprocess.CVideoProcess):
         # Get parameters
         param = self.getParam()
 
-        if param.model == None:
+        if not param.model:
             param.model = RAFTOpticalFlowProcess.trained_model(param.small, param.device)
 
         # Get input :
@@ -150,7 +150,7 @@ class RAFTOpticalFlowProcess(dataprocess.CVideoProcess):
         srcImage = input.getImage()
 
         # Test for correct input shape
-        w,h,c=np.shape(srcImage)
+        w, h, c = np.shape(srcImage)
         badDimensions = w%8!=0 or h%8!=0
         if badDimensions:
             raise Exception("Input dimensions should be multiples of 8.")
@@ -168,25 +168,27 @@ class RAFTOpticalFlowProcess(dataprocess.CVideoProcess):
             # Set image of input/output (numpy array):
             output.setImage(img_flo)
             
-            if self.rawOutput == True:
+            if self.rawOutput:
                 flow = flow.cpu().numpy()
                 outputFlow.setImage(flow[0])
         else:
             self.frame_1 = srcImage
+
         # Step progress bar:
         self.emitStepProgress()
 
         # Call endTaskRun to finalize process
         self.endTaskRun()
 
+
 # --------------------
 # - Factory class to build process object
 # - Inherits PyDataProcess.CProcessFactory from Ikomia API
 # --------------------
-class RAFTOpticalFlowProcessFactory(dataprocess.CProcessFactory):
+class RAFTOpticalFlowProcessFactory(dataprocess.CTaskFactory):
 
     def __init__(self):
-        dataprocess.CProcessFactory.__init__(self)
+        dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
         self.info.name = "RAFTOpticalFlow"
         self.info.shortDescription = "Estimate the optical flow from a video using a RAFT model."
