@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from RAFTOpticalFlow.core.utils.utils import bilinear_sampler, coords_grid
+from infer_raft_optical_flow.core.utils.utils import bilinear_sampler, coords_grid
 
 try:
     import alt_cuda_corr
