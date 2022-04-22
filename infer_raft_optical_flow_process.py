@@ -65,7 +65,7 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
         # frame_1 is reset to avoid optical flow calculation between 2 images of different videos
         self.frame_1 = None
 
-    def getProgressSteps(self, eltCount=1):
+    def getProgressSteps(self):
         # Function returning the number of progress steps for this process
         # This is handled by the main progress bar of Ikomia application
         return 1
