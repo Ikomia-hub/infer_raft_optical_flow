@@ -22,7 +22,7 @@ class RaftOpticalFlowParam(core.CWorkflowTaskParam):
         # Example : self.windowSize = 25
         self.small = True
         self.cuda = True if torch.cuda.is_available() else False
-        self.device = "cuda" if self.cuda==True else "cpu"
+        self.device = "cuda" if self.cuda else "cpu"
         self.model = None
 
     def setParamMap(self, param_map):
@@ -168,7 +168,7 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
 
             # Set image of input/output (numpy array):
             output.setImage(img_flo)
-            
+
             if self.rawOutput:
                 flow = flow.cpu().numpy()
                 outputFlow.setImage(flow[0])
