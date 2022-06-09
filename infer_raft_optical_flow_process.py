@@ -152,9 +152,9 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
 
         # Test for correct input shape
         w, h, c = np.shape(srcImage)
-        badDimensions = w%8!=0 or h%8!=0
+        badDimensions = w % 8 != 0 or h % 8 != 0
         if badDimensions:
-            raise Exception("Input dimensions should be multiples of 8.")
+            srcImage = cv2.resize(srcImage, dsize=(w//8*8, h//8*8))
 
         # Get output :
         output = self.getOutput(0)
