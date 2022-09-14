@@ -1,4 +1,4 @@
-from ikomia import core, dataprocess
+from ikomia import utils, core, dataprocess
 import copy
 import torch
 import numpy as np
@@ -7,7 +7,6 @@ from infer_raft_optical_flow.core.raft import RAFT
 from infer_raft_optical_flow.core.utils import flow_viz
 from collections import OrderedDict
 import os
-from distutils.util import strtobool
 
 
 # --------------------
@@ -28,7 +27,7 @@ class RaftOpticalFlowParam(core.CWorkflowTaskParam):
     def setParamMap(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
-        self.small = strtobool(param_map["small"])
+        self.small = utils.strtobool(param_map["small"])
         self.device = param_map["device"]
         self.model = None
 
