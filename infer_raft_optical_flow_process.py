@@ -24,17 +24,17 @@ class RaftOpticalFlowParam(core.CWorkflowTaskParam):
         self.device = "cuda" if self.cuda else "cpu"
         self.model = None
 
-    def setParamMap(self, param_map):
+    def set_values(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
         self.small = utils.strtobool(param_map["small"])
         self.device = param_map["device"]
         self.model = None
 
-    def getParamMap(self):
+    def get_values(self):
         # Send parameters values to Ikomia application
         # Create the specific dict structure (string container)
-        param_map = core.ParamMap()
+        param_map = {}
         param_map["small"] = str(self.small)
         param_map["device"] = str(self.device)
         return param_map
@@ -52,20 +52,20 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
         # Set this variable to True if you want to work with the raw Optical Flow (vector field)
         self.rawOutput = False
         if self.rawOutput:
-            self.addOutput(dataprocess.CImageIO())
+            self.add_output(dataprocess.CImageIO())
 
         self.frame_1 = None
         # Create parameters class
         if param is None:
-            self.setParam(RaftOpticalFlowParam())
+            self.set_param_object(RaftOpticalFlowParam())
         else:
-            self.setParam(copy.deepcopy(param))
+            self.set_param_object(copy.deepcopy(param))
 
     def notifyVideoStart(self, frame_count):
         # frame_1 is reset to avoid optical flow calculation between 2 images of different videos
         self.frame_1 = None
 
-    def getProgressSteps(self):
+    def get_progress_steps(self):
         # Function returning the number of progress steps for this process
         # This is handled by the main progress bar of Ikomia application
         return 1
@@ -133,21 +133,21 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
 
     def run(self):
         # Core function of your process
-        # Call beginTaskRun for initialization
+        # Call begin_task_run for initialization
 
-        self.beginTaskRun()
+        self.begin_task_run()
 
         # Get parameters
-        param = self.getParam()
+        param = self.get_param_object()
 
         if not param.model:
             param.model = RaftOpticalFlow.trained_model(param.small, param.device)
 
         # Get input :
-        input = self.getInput(0)
+        input = self.get_input(0)
 
         # Get image from input/output (numpy array):
-        srcImage = input.getImage()
+        srcImage = input.get_image()
 
         # Test for correct input shape
         w, h, c = np.shape(srcImage)
@@ -156,8 +156,8 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
             srcImage = cv2.resize(srcImage, dsize=(w//8*8, h//8*8))
 
         # Get output :
-        output = self.getOutput(0)
-        outputFlow = self.getOutput(1)
+        output = self.get_output(0)
+        outputFlow = self.get_output(1)
 
         if self.frame_1 is not None:
             frame_2 = self.frame_1
@@ -166,19 +166,19 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
             img_flo = RaftOpticalFlow.vizualize_flow(flow)
 
             # Set image of input/output (numpy array):
-            output.setImage(img_flo)
+            output.set_image(img_flo)
 
             if self.rawOutput:
                 flow = flow.cpu().numpy()
-                outputFlow.setImage(flow[0])
+                outputFlow.set_image(flow[0])
         else:
             self.frame_1 = srcImage
 
         # Step progress bar:
-        self.emitStepProgress()
+        self.emit_step_progress()
 
-        # Call endTaskRun to finalize process
-        self.endTaskRun()
+        # Call end_task_run to finalize process
+        self.end_task_run()
 
 
 # --------------------
@@ -191,26 +191,26 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
         dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
         self.info.name = "infer_raft_optical_flow"
-        self.info.shortDescription = "Estimate the optical flow from a video using a RAFT model."
+        self.info.short_description = "Estimate the optical flow from a video using a RAFT model."
         self.info.description = "Estimate per-pixel motion between two consecutive frames " \
                                 "with a RAFT model which is a composition of CNN and RNN." \
                                 "Models are trained with the Sintel dataset"
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Optical Flow"
         self.info.version = "1.0.1"
-        # self.info.iconPath = "your path to a specific icon"
+        # self.info.icon_path = "your path to a specific icon"
         self.info.authors = "Zachary Teed and Jia Deng"
         self.info.article = "RAFT: Recurrent All Pairs Field Transforms for Optical Flow"
         self.info.journal = "ECCV"
         self.info.year = 2020
         self.info.license = "BSD 3-Clause License"
         # URL of documentation
-        self.info.documentationLink = "https://learnopencv.com/optical-flow-using-deep-learning-raft/"
+        self.info.documentation_link = "https://learnopencv.com/optical-flow-using-deep-learning-raft/"
         # Code source repository
         self.info.repository = "https://github.com/princeton-vl/RAFT"
         # Keywords used for search
         self.info.keywords = "optical,flow,RAFT,CNN,RNN"
-        self.info.iconPath = "icon/RAFT.png"
+        self.info.icon_path = "icon/RAFT.png"
 
     def create(self, param=None):
         # Create process object

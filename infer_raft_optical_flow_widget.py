@@ -48,9 +48,9 @@ class RaftOpticalFlowWidget(core.CWorkflowTaskWidget):
         layout_ptr = qtconversion.PyQtToQt(self.gridLayout)
 
         # Set widget layout
-        self.setLayout(layout_ptr)
+        self.set_layout(layout_ptr)
 
-    def onApply(self):
+    def on_apply(self):
         # Apply button clicked slot
 
         # Get parameters from widget
@@ -63,7 +63,7 @@ class RaftOpticalFlowWidget(core.CWorkflowTaskWidget):
 
         self.parameters.model = RaftOpticalFlow.trained_model(self.parameters.small, self.parameters.device)
         # Send signal to launch the process
-        self.emitApply(self.parameters)
+        self.emit_apply(self.parameters)
 
 
 # --------------------
