@@ -197,7 +197,7 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
                                 "Models are trained with the Sintel dataset"
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Optical Flow"
-        self.info.version = "1.0.1"
+        self.info.version = "1.1.0"
         # self.info.icon_path = "your path to a specific icon"
         self.info.authors = "Zachary Teed and Jia Deng"
         self.info.article = "RAFT: Recurrent All Pairs Field Transforms for Optical Flow"
