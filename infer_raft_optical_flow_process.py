@@ -21,14 +21,14 @@ class RaftOpticalFlowParam(core.CWorkflowTaskParam):
         # Example : self.windowSize = 25
         self.small = True
         self.cuda = True if torch.cuda.is_available() else False
-        self.device = "cuda" if self.cuda else "cpu"
+        self.cuda = "cuda" if self.cuda else "cpu"
         self.model = None
 
     def set_values(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
         self.small = utils.strtobool(param_map["small"])
-        self.device = param_map["device"]
+        self.cuda = param_map["cuda"]
         self.model = None
 
     def get_values(self):
@@ -36,7 +36,7 @@ class RaftOpticalFlowParam(core.CWorkflowTaskParam):
         # Create the specific dict structure (string container)
         param_map = {}
         param_map["small"] = str(self.small)
-        param_map["device"] = str(self.device)
+        param_map["cuda"] = str(self.cuda)
         return param_map
 
 
@@ -141,7 +141,7 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
         param = self.get_param_object()
 
         if not param.model:
-            param.model = RaftOpticalFlow.trained_model(param.small, param.device)
+            param.model = RaftOpticalFlow.trained_model(param.small, param.cuda)
 
         # Get input :
         input = self.get_input(0)
@@ -162,7 +162,7 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
         if self.frame_1 is not None:
             frame_2 = self.frame_1
             frame_1 = srcImage
-            flow = RaftOpticalFlow.flow_from_images(param.model, param.device, frame_1, frame_2)
+            flow = RaftOpticalFlow.flow_from_images(param.model, param.cuda, frame_1, frame_2)
             img_flo = RaftOpticalFlow.vizualize_flow(flow)
 
             # Set image of input/output (numpy array):

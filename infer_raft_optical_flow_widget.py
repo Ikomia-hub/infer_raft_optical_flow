@@ -23,7 +23,7 @@ class RaftOpticalFlowWidget(core.CWorkflowTaskWidget):
         self.gridLayout = QGridLayout()
 
         # cuda parameter
-        cuda_label = QLabel("CUDA")
+        cuda_label = QLabel("Cuda")
         self.cuda_ckeck = QCheckBox()
 
         if self.parameters.cuda:
@@ -56,12 +56,12 @@ class RaftOpticalFlowWidget(core.CWorkflowTaskWidget):
         # Get parameters from widget
         # Example : self.parameters.windowSize = self.spinWindowSize.value()
         if self.cuda_ckeck.isChecked():
-            self.parameters.device = "cuda"
+            self.parameters.cuda = "cuda"
         else:
-            self.parameters.device = "cpu"
+            self.parameters.cuda = "cpu"
         self.parameters.small=self.rbtn1.isChecked()
 
-        self.parameters.model = RaftOpticalFlow.trained_model(self.parameters.small, self.parameters.device)
+        self.parameters.model = RaftOpticalFlow.trained_model(self.parameters.small, self.parameters.cuda)
         # Send signal to launch the process
         self.emit_apply(self.parameters)
 
