@@ -1,5 +1,4 @@
 import logging
-from ikomia.core import task, ParamMap
 from ikomia.utils.tests import run_for_test
 import cv2
 
@@ -11,10 +10,10 @@ def test(t, data_dict):
     img = cv2.imread(data_dict["images"]["detection"]["coco"])[:, :, ::-1]
     input_img_0 = t.get_input(0)
     input_img_0.set_image(img)
-    params = task.get_parameters(t)
+    params = t.get_parameters()
     # run once to set frame 1
     run_for_test(t)
     for small in [True, False]:
         params["small"] = small
-        task.set_parameters(t, params)
+        t.set_parameters(params)
         yield run_for_test(t)
