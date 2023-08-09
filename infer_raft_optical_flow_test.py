@@ -13,7 +13,7 @@ def test(t, data_dict):
     params = t.get_parameters()
     # run once to set frame 1
     run_for_test(t)
-    for small in [True, False]:
+    for small in ["True", "False"]:
         params["small"] = small
         t.set_parameters(params)
         yield run_for_test(t)
