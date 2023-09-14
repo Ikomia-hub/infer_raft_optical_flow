@@ -19,10 +19,11 @@
     </a> 
 </p>
 
-Estimate per-pixel motion between two consecutive frames with a RAFT model which is a composition of CNN and RNN.Models are trained with the Sintel dataset
+Run RAFT optical flow algorithm. 
 
-[Insert illustrative image here. Image must be accessible publicly, in algorithm Github repository for example.
-<img src="images/illustration.png"  alt="Illustrative image" width="30%" height="30%">]
+Estimate per-pixel motion between two consecutive frames with a RAFT model which is a composition of CNN and RNN. Models are trained with the Sintel dataset
+
+![Example image](https://raw.githubusercontent.com/Ikomia-hub/infer_raft_optical_flow/feat/new_readme/images/basket-result.jpg)
 
 ## :rocket: Use with Ikomia API
 
@@ -36,20 +37,48 @@ pip install ikomia
 
 #### 2. Create your workflow
 
-[Change the sample image URL to fit algorithm purpose]
-
 ```python
-import ikomia
+from ikomia.core import IODataType
+from ikomia.dataprocess import CImageIO
 from ikomia.dataprocess.workflow import Workflow
+from ikomia.utils.displayIO import display
+import cv2
 
 # Init your workflow
 wf = Workflow()
 
-# Add algorithm
-algo = wf.add_task(name="infer_raft_optical_flow", auto_connect=True)
+# Add RAFT optical flow algorithm
+optical_flow = wf.add_task(name="infer_raft_optical_flow", auto_connect=True)
 
-# Run on your image  
-wf.run_on(url="example_image.png")
+stream = cv2.VideoCapture(0)
+while True:
+    # Read image from stream
+    ret, frame = stream.read()
+
+    # Test if streaming is OK
+    if not ret:
+        continue
+
+    # Run algorithm on current frame
+    # RAFT algorithm need at least 2 frames to give results
+    optical_flow.set_input(CImageIO(IODataType.IMAGE, frame), 0)
+    optical_flow.run()
+
+    # Get and display results
+    image_out = optical_flow.get_output(0)
+    if image_out.is_data_available():
+        img_res = (image_out.get_image()*255).astype('uint8')
+        img_res = cv2.cvtColor(img_res, cv2.COLOR_BGR2RGB)
+        display(img_res, title="RAFT", viewer="opencv")
+
+    # Press 'q' to quit the streaming process
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# After the loop release the stream object
+stream.release()
+# Destroy all windows
+cv2.destroyAllWindows()
 ```
 
 ## :sunny: Use with Ikomia Studio
@@ -62,56 +91,69 @@ Ikomia Studio offers a friendly UI with the same features as the API.
 
 ## :pencil: Set algorithm parameters
 
-[Explain each algorithm parameters]
-
-[Change the sample image URL to fit algorithm purpose]
-
 ```python
-import ikomia
-from ikomia.dataprocess.workflow import Workflow
-
 # Init your workflow
 wf = Workflow()
 
-# Add algorithm
-algo = wf.add_task(name="infer_raft_optical_flow", auto_connect=True)
+# Add RAFT optical flow algorithm
+optical_flow = wf.add_task(name="infer_raft_optical_flow", auto_connect=True)
 
-algo.set_parameters({
-    "param1": "value1",
-    "param2": "value2",
-    ...
+optical_flow.set_parameters({
+    "small": "True",
+    "cuda": "True",
 })
-
-# Run on your image  
-wf.run_on(url="example_image.png")
-
 ```
+
+- **small** (bool, default=True): True to use small model (faster), False to use large model (slower, better quality). 
+- **cuda** (bool, default=True): CUDA acceleration if True, run on CPU otherwise.
 
 ## :mag: Explore algorithm outputs
 
 Every algorithm produces specific outputs, yet they can be explored them the same way using the Ikomia API. For a more in-depth understanding of managing algorithm outputs, please refer to the [documentation](https://ikomia-dev.github.io/python-api-documentation/advanced_guide/IO_management.html).
 
 ```python
-import ikomia
+from ikomia.core import IODataType
+from ikomia.dataprocess import CImageIO
 from ikomia.dataprocess.workflow import Workflow
+from ikomia.utils.displayIO import display
+import cv2
 
 # Init your workflow
 wf = Workflow()
 
-# Add algorithm
-algo = wf.add_task(name="infer_raft_optical_flow", auto_connect=True)
+# Add RAFT optical flow algorithm
+optical_flow = wf.add_task(name="infer_raft_optical_flow", auto_connect=True)
 
-# Run on your image  
-wf.run_on(url="example_image.png")
+stream = cv2.VideoCapture(0)
+while True:
+    # Read image from stream
+    ret, frame = stream.read()
 
-# Iterate over outputs
-for output in algo.get_outputs()
-    # Print information
-    print(output)
-    # Export it to JSON
-    output.to_json()
+    # Test if streaming is OK
+    if not ret:
+        continue
+
+    # Run algorithm on current frame
+    # RAFT algorithm need at least 2 frames to give results
+    optical_flow.set_input(CImageIO(IODataType.IMAGE, frame), 0)
+    optical_flow.run()
+
+    # Iterate over outputs
+    for output in algo.get_outputs()
+        # Print information
+        print(output)
+        # Export it to JSON
+        output.to_json()
+
+    # Press 'q' to quit the streaming process
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# After the loop release the stream object
+stream.release()
+# Destroy all windows
+cv2.destroyAllWindows()
 ```
 
-## :fast_forward: Advanced usage 
-
-[optional]
+RAFT algorithm generates 1 output:
+- Optical flow image (CImageIO)
