@@ -18,25 +18,24 @@ class RaftOpticalFlowParam(core.CWorkflowTaskParam):
     def __init__(self):
         core.CWorkflowTaskParam.__init__(self)
         # Place default value initialization here
-        # Example : self.windowSize = 25
         self.small = True
         self.cuda = True if torch.cuda.is_available() else False
         self.cuda = "cuda" if self.cuda else "cpu"
-        self.model = None
+        self.update = False
 
     def set_values(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
         self.small = utils.strtobool(param_map["small"])
-        self.cuda = param_map["cuda"]
-        self.model = None
+        self.cuda = utils.strtobool(param_map["cuda"])
 
     def get_values(self):
         # Send parameters values to Ikomia application
         # Create the specific dict structure (string container)
-        param_map = {}
-        param_map["small"] = str(self.small)
-        param_map["cuda"] = str(self.cuda)
+        param_map = {
+            "small": str(self.small),
+            "cuda": str(self.cuda)
+        }
         return param_map
 
 
@@ -48,7 +47,7 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
 
     def __init__(self, name, param):
         dataprocess.CVideoTask.__init__(self, name)
-        # Add input/output of the process here
+        self.model = None
         # Set this variable to True if you want to work with the raw Optical Flow (vector field)
         self.rawOutput = False
         if self.rawOutput:
@@ -61,7 +60,7 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
         else:
             self.set_param_object(copy.deepcopy(param))
 
-    def notifyVideoStart(self, frame_count):
+    def notify_video_start(self, frame_count):
         # frame_1 is reset to avoid optical flow calculation between 2 images of different videos
         self.frame_1 = None
 
@@ -70,109 +69,116 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
         # This is handled by the main progress bar of Ikomia application
         return 1
 
-    def get_cpu_model(model):
+    def get_cpu_model(self, model):
         new_model = OrderedDict()
         # get all layer's names from model
         for name in model:
             # create new name and update new model
             new_name = name[7:]
             new_model[new_name] = model[name]
+
         return new_model
 
-    def trained_model(small, device, dropout=0, mixed_precision=True, alternate_corr=False):
-        print("Loading pre-trained model...")
-        # get the RAFT model
-        model = RAFT(small, dropout, mixed_precision, alternate_corr)
-        # load pretrained weights
-        if small:
-            pretrained_weights = torch.load(os.path.dirname(os.path.realpath(__file__)) + "/models/raft-small.pth")
-        else:
-            pretrained_weights = torch.load(os.path.dirname(os.path.realpath(__file__)) + "/models/raft-sintel.pth")
+    def load_model(self, small, device, dropout=0, mixed_precision=True, alternate_corr=False):
+        param = self.get_param_object()
+        if self.model is None or param.update is True:
+            print("Loading pre-trained model...")
+            # get the RAFT model
+            self.model = RAFT(small, dropout, mixed_precision, alternate_corr)
+            # load pretrained weights
+            if small:
+                model_name = "raft-small.pth"
+            else:
+                model_name = "raft-sintel.pth"
 
-        if device == "cuda":
-            # parallel between available GPUs
-            model = torch.nn.DataParallel(model)
-            # load the pretrained weights into model
-            model.load_state_dict(pretrained_weights)
-            model.to(device)
-        else:
-            if device == "cpu":
-                # change key names for CPU runtime
-                pretrained_weights = RaftOpticalFlow.get_cpu_model(pretrained_weights)
+            model_weight_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "models", model_name)
+            if not os.path.exists(model_weight_file):
+                print(f"Downloading model {model_name}, please wait...")
+                self.download(f"{utils.get_model_hub_url()}/{self.name}/{model_name}", model_weight_file)
+
+            pretrained_weights = torch.load(model_weight_file)
+
+            if device == "cuda":
+                # parallel between available GPUs
+                self.model = torch.nn.DataParallel(self.model)
                 # load the pretrained weights into model
-                model.load_state_dict(pretrained_weights)
+                self.model.load_state_dict(pretrained_weights)
+                self.model.to(device)
+            elif device == "cpu":
+                # change key names for CPU runtime
+                pretrained_weights = self.get_cpu_model(pretrained_weights)
+                # load the pretrained weights into model
+                self.model.load_state_dict(pretrained_weights)
 
-        # change model's mode to evaluation
-        model.eval()
-        return model
+            # change model's mode to evaluation
+            self.model.eval()
+            param.update = False
 
-    def frame_preprocess(frame, device):
+    def frame_preprocess(self, frame, device):
         frame = torch.from_numpy(frame).permute(2, 0, 1).float()
         frame = frame.unsqueeze(0)
         frame = frame.to(device)
         return frame
 
-    def vizualize_flow(flo):
+    def visualize_flow(self, flow):
         # permute the channels and change device is necessary
-        flo = flo[0].permute(1, 2, 0).cpu().numpy()
-
+        flow = flow[0].permute(1, 2, 0).cpu().numpy()
         # map flow to rgb image
-        flo = flow_viz.flow_to_image(flo)
-        flo = cv2.cvtColor(flo, cv2.COLOR_RGB2BGR)
-        return flo / 255.0
+        flow = flow_viz.flow_to_image(flow)
+        flow = cv2.cvtColor(flow, cv2.COLOR_RGB2BGR)
+        return flow / 255.0
 
-    def flow_from_images(model, device, frame_1, frame_2):
+    def flow_from_images(self, device, frame_1, frame_2):
         # frame preprocessing
-        frame_1 = RaftOpticalFlow.frame_preprocess(frame_1, device)
-        frame_2 = RaftOpticalFlow.frame_preprocess(frame_2, device)
+        frame_1 = self.frame_preprocess(frame_1, device)
+        frame_2 = self.frame_preprocess(frame_2, device)
+
         with torch.no_grad():
             # predict the flow
-            flow_low, flow_up = model(frame_1, frame_2, iters=20, test_mode=True)
-            # transpose the flow output and convert it into numpy array
+            flow_low, flow_up = self.model(frame_1, frame_2, iters=20, test_mode=True)
+
         return flow_up
 
     def run(self):
         # Core function of your process
         # Call begin_task_run for initialization
-
         self.begin_task_run()
 
         # Get parameters
         param = self.get_param_object()
-
-        if not param.model:
-            param.model = RaftOpticalFlow.trained_model(param.small, param.cuda)
+        self.load_model(param.small, param.cuda)
 
         # Get input :
-        input = self.get_input(0)
+        img_input = self.get_input(0)
 
         # Get image from input/output (numpy array):
-        srcImage = input.get_image()
+        src_image = img_input.get_image()
 
         # Test for correct input shape
-        w, h, c = np.shape(srcImage)
-        badDimensions = w % 8 != 0 or h % 8 != 0
-        if badDimensions:
-            srcImage = cv2.resize(srcImage, dsize=(w//8*8, h//8*8))
+        w, h, c = np.shape(src_image)
+        bad_dimensions = w % 8 != 0 or h % 8 != 0
+
+        if bad_dimensions:
+            src_image = cv2.resize(src_image, dsize=(w//8*8, h//8*8))
 
         # Get output :
-        output = self.get_output(0)
-        outputFlow = self.get_output(1)
+        img_output = self.get_output(0)
+        flow_output = self.get_output(1)
 
         if self.frame_1 is not None:
             frame_2 = self.frame_1
-            frame_1 = srcImage
-            flow = RaftOpticalFlow.flow_from_images(param.model, param.cuda, frame_1, frame_2)
-            img_flo = RaftOpticalFlow.vizualize_flow(flow)
+            frame_1 = src_image
+            flow = self.flow_from_images(param.cuda, frame_1, frame_2)
+            img_flow = self.visualize_flow(flow)
 
             # Set image of input/output (numpy array):
-            output.set_image(img_flo)
+            img_output.set_image(img_flow)
 
             if self.rawOutput:
                 flow = flow.cpu().numpy()
-                outputFlow.set_image(flow[0])
+                flow_output.set_image(flow[0])
         else:
-            self.frame_1 = srcImage
+            self.frame_1 = src_image
 
         # Step progress bar:
         self.emit_step_progress()
@@ -197,7 +203,7 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
                                 "Models are trained with the Sintel dataset"
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Optical Flow"
-        self.info.version = "1.1.0"
+        self.info.version = "1.2.0"
         # self.info.icon_path = "your path to a specific icon"
         self.info.authors = "Zachary Teed and Jia Deng"
         self.info.article = "RAFT: Recurrent All Pairs Field Transforms for Optical Flow"

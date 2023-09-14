@@ -52,16 +52,14 @@ class RaftOpticalFlowWidget(core.CWorkflowTaskWidget):
 
     def on_apply(self):
         # Apply button clicked slot
-
         # Get parameters from widget
-        # Example : self.parameters.windowSize = self.spinWindowSize.value()
         if self.cuda_ckeck.isChecked():
             self.parameters.cuda = "cuda"
         else:
             self.parameters.cuda = "cpu"
-        self.parameters.small=self.rbtn1.isChecked()
 
-        self.parameters.model = RaftOpticalFlow.trained_model(self.parameters.small, self.parameters.cuda)
+        self.parameters.small = self.rbtn1.isChecked()
+        self.parameters.update = True
         # Send signal to launch the process
         self.emit_apply(self.parameters)
 
