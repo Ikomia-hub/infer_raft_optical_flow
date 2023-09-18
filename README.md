@@ -115,7 +115,6 @@ Every algorithm produces specific outputs, yet they can be explored them the sam
 from ikomia.core import IODataType
 from ikomia.dataprocess import CImageIO
 from ikomia.dataprocess.workflow import Workflow
-from ikomia.utils.displayIO import display
 import cv2
 
 # Init your workflow
@@ -139,7 +138,7 @@ while True:
     optical_flow.run()
 
     # Iterate over outputs
-    for output in algo.get_outputs()
+    for output in optical_flow.get_outputs():
         # Print information
         print(output)
         # Export it to JSON
