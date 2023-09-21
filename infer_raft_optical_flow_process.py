@@ -183,6 +183,15 @@ class RaftOpticalFlow(dataprocess.CVideoTask):
                 flow_output.set_image(flow[0])
         else:
             self.frame_1 = src_image
+            flow = self.flow_from_images(device, self.frame_1, self.frame_1)
+            img_flow = self.visualize_flow(flow)
+
+            # Set image of input/output (numpy array):
+            img_output.set_image(img_flow)
+
+            if self.rawOutput:
+                flow = flow.cpu().numpy()
+                flow_output.set_image(flow[0])
 
         # Step progress bar:
         self.emit_step_progress()
