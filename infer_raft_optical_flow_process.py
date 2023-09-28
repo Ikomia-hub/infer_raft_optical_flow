@@ -192,9 +192,6 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
         # Set process information as string here
         self.info.name = "infer_raft_optical_flow"
         self.info.short_description = "Estimate the optical flow from a video using a RAFT model."
-        self.info.description = "Estimate per-pixel motion between two consecutive frames " \
-                                "with a RAFT model which is a composition of CNN and RNN." \
-                                "Models are trained with the Sintel dataset"
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Optical Flow"
         self.info.version = "1.1.0"
@@ -207,7 +204,8 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
         # URL of documentation
         self.info.documentation_link = "https://learnopencv.com/optical-flow-using-deep-learning-raft/"
         # Code source repository
-        self.info.repository = "https://github.com/princeton-vl/RAFT"
+        self.info.repository = "https://github.com/Ikomia-hub/infer_raft_optical_flow"
+        self.info.original_repository = "https://github.com/princeton-vl/RAFT"
         # Keywords used for search
         self.info.keywords = "optical,flow,RAFT,CNN,RNN"
         self.info.icon_path = "icon/RAFT.png"
