@@ -223,10 +223,13 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
         # URL of documentation
         self.info.documentation_link = "https://learnopencv.com/optical-flow-using-deep-learning-raft/"
         # Code source repository
-        self.info.repository = "https://github.com/princeton-vl/RAFT"
+        self.info.repository = "https://github.com/Ikomia-hub/infer_raft_optical_flow"
+        self.info.original_repository = "https://github.com/princeton-vl/RAFT"
         # Keywords used for search
         self.info.keywords = "optical,flow,RAFT,CNN,RNN"
         self.info.icon_path = "icon/RAFT.png"
+        self.info.algo_type = core.AlgoType.INFER
+        self.info.algo_tasks = "OPTICAL_FLOW"
 
     def create(self, param=None):
         # Create process object
