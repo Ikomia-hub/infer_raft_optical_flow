@@ -209,6 +209,8 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
         # Keywords used for search
         self.info.keywords = "optical,flow,RAFT,CNN,RNN"
         self.info.icon_path = "icon/RAFT.png"
+        self.info.algo_type = core.AlgoType.INFER
+        self.info.algo_tasks = "OPTICAL_FLOW"
 
     def create(self, param=None):
         # Create process object
