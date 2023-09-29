@@ -23,7 +23,7 @@ Run RAFT optical flow algorithm.
 
 Estimate per-pixel motion between two consecutive frames with a RAFT model which is a composition of CNN and RNN. Models are trained with the Sintel dataset
 
-![Example image](https://raw.githubusercontent.com/Ikomia-hub/infer_raft_optical_flow/feat/new_readme/images/basket-result.jpg)
+![Example image](https://raw.githubusercontent.com/Ikomia-hub/infer_raft_optical_flow/main/images/basket-result.jpg)
 
 ## :rocket: Use with Ikomia API
 
