@@ -213,7 +213,7 @@ class RaftOpticalFlowFactory(dataprocess.CTaskFactory):
         self.info.short_description = "Estimate the optical flow from a video using a RAFT model."
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Optical Flow"
-        self.info.version = "1.2.0"
+        self.info.version = "1.2.1"
         # self.info.icon_path = "your path to a specific icon"
         self.info.authors = "Zachary Teed and Jia Deng"
         self.info.article = "RAFT: Recurrent All Pairs Field Transforms for Optical Flow"
